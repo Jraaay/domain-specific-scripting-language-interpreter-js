@@ -44,4 +44,10 @@ export default defineComponent({
     max-height: 2.5em;
     max-width: 3em;
 }
+.sc-message--content.received .sc-message--text {
+    text-align: left;
+}
+.sc-header--title.enabled {
+    pointer-events: none;
+}
 </style>

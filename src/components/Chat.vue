@@ -26,6 +26,8 @@
 <script>
 import { defineComponent, reactive, toRefs, watch } from "vue";
 import { bus } from "@/bus.js";
+import { ElMessageBox, ElMessage } from "element-plus";
+import { getVars, initEnv, interpret } from "@/utils/interpreter.js";
 
 export default defineComponent({
     name: "Chat",
@@ -43,26 +45,85 @@ export default defineComponent({
             }
         }
         function replyByRobot(message) {
-            return message + " (I'm a robot)";
+            try {
+                const answer = interpret(
+                    bus.ast,
+                    tmp.env,
+                    message,
+                    false,
+                    // bus.ast.exitStep.includes(tmp.env.curStep),
+                    false
+                );
+                tmp.stop = answer.end;
+                return answer.text;
+            } catch (e) {
+                ElMessage.error(e.message);
+                tmp.stop = true;
+                return;
+            }
         }
         function onMessageWasSent(message) {
             // called when the user sends a message
             tmp.messageList = [...tmp.messageList, message];
+            if (tmp.stop) {
+                return;
+            }
             if (message.author != "Robot") {
-                tmp.onMessageWasSent({
-                    author: "Robot",
-                    type: "text",
-                    data: { text: replyByRobot(message.data.text) },
-                });
+                sendMessage(replyByRobot(message.data.text));
             }
         }
         function openChat() {
             // called when the user clicks on the fab button to open the chat
-            tmp.isChatOpen = true;
-            tmp.newMessagesCount = 0;
+            const vars = getVars(bus.ast);
+            let text = "请按顺序输入以下参数，以空格为分割：";
+            for (let i of Object.keys(vars)) {
+                text += "\n" + i;
+            }
+            ElMessageBox.prompt(text, "Var Init", {
+                confirmButtonText: "OK",
+                cancelButtonText: "Cancel",
+                inputPattern: RegExp(
+                    "([^\\s]+(\\s|$)){" + Object.keys(vars).length + "}"
+                ),
+                inputErrorMessage: "请输入正确参数",
+            })
+                .then(({ value }) => {
+                    const varList = value.split(" ");
+                    let j = 0;
+                    for (let i of Object.keys(vars)) {
+                        vars[i] = varList[j];
+                        j++;
+                    }
+                    tmp.env = initEnv(bus.ast, vars);
+                    tmp.messageList = [];
+                    try {
+                        const answer = interpret(
+                            bus.ast,
+                            tmp.env,
+                            "",
+                            true,
+                            // bus.ast.exitStep.includes(tmp.env.curStep),
+                            false
+                        );
+                        sendMessage(answer.text);
+                        tmp.stop = false;
+                        tmp.isChatOpen = true;
+                        tmp.newMessagesCount = 0;
+                    } catch (e) {
+                        ElMessage.error(e.message);
+                        tmp.stop = true;
+                    }
+                })
+                .catch(() => {
+                    ElMessage({
+                        type: "info",
+                        message: "Input canceled",
+                    });
+                });
         }
         function closeChat() {
             // called when the user clicks on the botton to close the chat
+            tmp.env = {};
             tmp.isChatOpen = false;
         }
         function handleScrollToTop() {
@@ -79,13 +140,7 @@ export default defineComponent({
                 },
             ], // the list of all the participant of the conversation. `name` is the user name, `id` is used to establish the author of a message, `imageUrl` is supposed to be the user avatar.
             titleImageUrl: "img/title.png",
-            messageList: [
-                {
-                    author: "Robot",
-                    type: "text",
-                    data: { text: "Hello" },
-                },
-            ], // the list of the messages to show, can be paginated and adjusted dynamically
+            messageList: [], // the list of the messages to show, can be paginated and adjusted dynamically
             newMessagesCount: 0,
             isChatOpen: false, // to determine whether the chat window should be open or closed
             showTypingIndicator: "", // when set to a value matching the participant.id it shows the typing indicator for the specific user
@@ -121,11 +176,37 @@ export default defineComponent({
             closeChat,
             handleScrollToTop,
             activeCode: bus.activeCode,
+            env: {},
+            stop: true,
         });
         watch(
-            () => bus.activeCode,
+            () => bus.ast,
             () => {
-                console.log("new ", bus.activeCode);
+                tmp.isChatOpen = false;
+                tmp.env = {};
+                tmp.stop = false;
+            }
+        );
+        watch(
+            () => tmp.stop,
+            () => {
+                if (tmp.stop) {
+                    const input = document.getElementsByClassName(
+                        "sc-user-input--text"
+                    );
+                    if (input.length > 0) {
+                        input[0].contentEditable = "false";
+                        input[0].setAttribute("placeholder", "聊天已结束");
+                    }
+                } else {
+                    const input = document.getElementsByClassName(
+                        "sc-user-input--text"
+                    );
+                    if (input.length > 0) {
+                        input[0].contentEditable = "true";
+                        input[0].setAttribute("placeholder", "请输入");
+                    }
+                }
             }
         );
         return toRefs(tmp);

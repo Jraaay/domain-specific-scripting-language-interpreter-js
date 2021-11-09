@@ -2,8 +2,7 @@
     <div id="editor">
         <MonacoEditor
             class="editor"
-            v-model="code"
-            language="javascript"
+            language="elixir"
             height="300px"
             theme="vs"
             :value="codeText"
@@ -158,7 +157,6 @@ export default defineComponent({
             return false;
         }
         const tmp = reactive({
-            code: "const noop = () => {}",
             codeText: "",
             onChange,
             applyScript,
