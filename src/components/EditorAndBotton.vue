@@ -78,7 +78,12 @@ export default defineComponent({
             tmp.codeText = val;
         }
         function applyScript() {
-            bus.activeCode = tmp.codeText;
+            if (bus.activeCode == tmp.codeText) {
+                ElMessage.warning("当前脚本已经生效");
+                return;
+            } else {
+                bus.activeCode = tmp.codeText;
+            }
         }
         function download() {
             ElMessageBox.prompt("请输入下载的文件名", "下载", {

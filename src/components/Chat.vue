@@ -44,7 +44,7 @@ export default defineComponent({
                 });
             }
         }
-        function replyByRobot(message) {
+        function replyByRobot(message, silence = false) {
             try {
                 const answer = interpret(
                     bus.ast,
@@ -52,8 +52,16 @@ export default defineComponent({
                     message,
                     false,
                     // bus.ast.exitStep.includes(tmp.env.curStep),
-                    false
+                    silence
                 );
+                console.log(answer);
+                if (answer.listen > 0) {
+                    tmp.timeoutID = setTimeout(() => {
+                        sendMessage(replyByRobot("", true));
+                        console.log("End timer");
+                    }, answer.listen * 1000);
+                    console.log("Start timer");
+                }
                 tmp.stop = answer.end;
                 return answer.text;
             } catch (e) {
@@ -69,6 +77,8 @@ export default defineComponent({
                 return;
             }
             if (message.author != "Robot") {
+                clearTimeout(tmp.timeoutID);
+                console.log("Stop timer");
                 sendMessage(replyByRobot(message.data.text));
             }
         }
@@ -105,6 +115,14 @@ export default defineComponent({
                             // bus.ast.exitStep.includes(tmp.env.curStep),
                             false
                         );
+                        console.log(answer);
+                        if (answer.listen > 0) {
+                            tmp.timeoutID = setTimeout(() => {
+                                sendMessage(replyByRobot("", true));
+                                console.log("End timer");
+                            }, answer.listen * 1000);
+                            console.log("Start timer");
+                        }
                         sendMessage(answer.text);
                         tmp.stop = false;
                         tmp.isChatOpen = true;
@@ -125,6 +143,8 @@ export default defineComponent({
             // called when the user clicks on the botton to close the chat
             tmp.env = {};
             tmp.isChatOpen = false;
+            clearTimeout(tmp.timeoutID);
+            tmp.timeoutID = null;
         }
         function handleScrollToTop() {
             // called when the user scrolls message list to top
@@ -178,13 +198,16 @@ export default defineComponent({
             activeCode: bus.activeCode,
             env: {},
             stop: true,
+            timeoutID: null,
         });
         watch(
-            () => bus.ast,
+            () => bus.activeCode,
             () => {
-                tmp.isChatOpen = false;
+                closeChat();
                 tmp.env = {};
-                tmp.stop = false;
+                tmp.stop = true;
+                clearTimeout(tmp.timeoutID);
+                tmp.timeoutID = null;
             }
         );
         watch(
