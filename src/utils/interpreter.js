@@ -28,13 +28,13 @@ export function interpret(
         return {
             text: text,
             end: ast.exitStep.includes(env.curStep),
-            silence: ast.HashTable[env.curStep].silence.args ? ast.HashTable[env.curStep].silence.args : 0,
+            listen: ast.HashTable[env.curStep].listen ? ast.HashTable[env.curStep].listen.time : 0,
         };
     } else if (silence) {
         if (ast.HashTable[env.curStep].silence) {
-            env.curStep = ast.HashTable[env.curStep].silence;
+            env.curStep = ast.HashTable[env.curStep].silence.args;
         } else if (ast.HashTable[env.curStep].default) {
-            env.curStep = ast.HashTable[env.curStep].default;
+            env.curStep = ast.HashTable[env.curStep].default.args;
         } else {
             throw new Error("No silence step or default step");
         }
@@ -68,6 +68,6 @@ export function interpret(
     return {
         text: text,
         end: ast.exitStep.includes(env.curStep),
-        silence: ast.HashTable[env.curStep].silence.args ? ast.HashTable[env.curStep].silence.args : 0,
+        listen: ast.HashTable[env.curStep].listen ? ast.HashTable[env.curStep].listen.time : 0,
     };
 }
