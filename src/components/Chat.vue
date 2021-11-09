@@ -85,59 +85,89 @@ export default defineComponent({
         function openChat() {
             // called when the user clicks on the fab button to open the chat
             const vars = getVars(bus.ast);
-            let text = "请按顺序输入以下参数，以空格为分割：";
-            for (let i of Object.keys(vars)) {
-                text += "\n" + i;
-            }
-            ElMessageBox.prompt(text, "Var Init", {
-                confirmButtonText: "OK",
-                cancelButtonText: "Cancel",
-                inputPattern: RegExp(
-                    "([^\\s]+(\\s|$)){" + Object.keys(vars).length + "}"
-                ),
-                inputErrorMessage: "请输入正确参数",
-            })
-                .then(({ value }) => {
-                    const varList = value.split(" ");
-                    let j = 0;
-                    for (let i of Object.keys(vars)) {
-                        vars[i] = varList[j];
-                        j++;
-                    }
-                    tmp.env = initEnv(bus.ast, vars);
-                    tmp.messageList = [];
-                    try {
-                        const answer = interpret(
-                            bus.ast,
-                            tmp.env,
-                            "",
-                            true,
-                            // bus.ast.exitStep.includes(tmp.env.curStep),
-                            false
-                        );
-                        console.log(answer);
-                        if (answer.listen > 0) {
-                            tmp.timeoutID = setTimeout(() => {
-                                sendMessage(replyByRobot("", true));
-                                console.log("End timer");
-                            }, answer.listen * 1000);
-                            console.log("Start timer");
-                        }
-                        sendMessage(answer.text);
-                        tmp.stop = false;
-                        tmp.isChatOpen = true;
-                        tmp.newMessagesCount = 0;
-                    } catch (e) {
-                        ElMessage.error(e.message);
-                        tmp.stop = true;
-                    }
+            if (Object.keys(vars).length > 0) {
+                let text = "请按顺序输入以下参数，以空格为分割：";
+                for (let i of Object.keys(vars)) {
+                    text += "\n" + i;
+                }
+                ElMessageBox.prompt(text, "Var Init", {
+                    confirmButtonText: "OK",
+                    cancelButtonText: "Cancel",
+                    inputPattern: RegExp(
+                        "^([^\\s]+(\\s|$)){" + Object.keys(vars).length + "}$"
+                    ),
+                    inputErrorMessage: "请输入正确参数",
                 })
-                .catch(() => {
-                    ElMessage({
-                        type: "info",
-                        message: "Input canceled",
+                    .then(({ value }) => {
+                        const varList = value.split(" ");
+                        let j = 0;
+                        for (let i of Object.keys(vars)) {
+                            vars[i] = varList[j];
+                            j++;
+                        }
+                        tmp.env = initEnv(bus.ast, vars);
+                        tmp.messageList = [];
+                        try {
+                            const answer = interpret(
+                                bus.ast,
+                                tmp.env,
+                                "",
+                                true,
+                                // bus.ast.exitStep.includes(tmp.env.curStep),
+                                false
+                            );
+                            console.log(answer);
+                            if (answer.listen > 0) {
+                                tmp.timeoutID = setTimeout(() => {
+                                    sendMessage(replyByRobot("", true));
+                                    console.log("End timer");
+                                }, answer.listen * 1000);
+                                console.log("Start timer");
+                            }
+                            sendMessage(answer.text);
+                            tmp.stop = false;
+                            tmp.isChatOpen = true;
+                            tmp.newMessagesCount = 0;
+                        } catch (e) {
+                            ElMessage.error(e.message);
+                            tmp.stop = true;
+                        }
+                    })
+                    .catch(() => {
+                        ElMessage({
+                            type: "info",
+                            message: "Input canceled",
+                        });
                     });
-                });
+            } else {
+                tmp.env = initEnv(bus.ast, {});
+                tmp.messageList = [];
+                try {
+                    const answer = interpret(
+                        bus.ast,
+                        tmp.env,
+                        "",
+                        true,
+                        // bus.ast.exitStep.includes(tmp.env.curStep),
+                        false
+                    );
+                    console.log(answer);
+                    if (answer.listen > 0) {
+                        tmp.timeoutID = setTimeout(() => {
+                            sendMessage(replyByRobot("", true));
+                            console.log("End timer");
+                        }, answer.listen * 1000);
+                        console.log("Start timer");
+                    }
+                    sendMessage(answer.text);
+                    tmp.stop = false;
+                    tmp.isChatOpen = true;
+                    tmp.newMessagesCount = 0;
+                } catch (e) {
+                    ElMessage.error(e.message);
+                    tmp.stop = true;
+                }
+            }
         }
         function closeChat() {
             // called when the user clicks on the botton to close the chat
