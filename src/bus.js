@@ -5,14 +5,14 @@ import { ElMessage } from "element-plus";
 let activeCode = "";
 const defaultCode = `Step welcome
     Speak $name + "您好，请问有什么可以帮您?"
-    Listen 5, 20
+    Listen 5
     Branch "投诉", complainProc
     Branch "账单", billProc
-    Silence silence
+    Silence silenceProc
     Default defaultProc
 Step complainProc
     Speak "您的意见是我们改进工作的动力，请问您还有什么补充?"
-    Listen 5, 50
+    Listen 5
     Default thanks
 Step thanks
     Speak "感谢您的来电，再见"
@@ -44,6 +44,7 @@ try {
 }
 catch (e) {
     ElMessage.error(e.message);
+    ElMessage.error("代码解析失败，已将代码应用为默认代码");
     ast = parse(defaultCode);
 }
 
