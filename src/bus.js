@@ -22,6 +22,7 @@ Step billProc
     Exit
 Step silenceProc
     Speak "听不清，请您大声一点可以吗?"
+    Listen 5
     Branch "投诉", complainProc
     Branch "账单", billProc
     Silence silenceProc
