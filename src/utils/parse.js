@@ -1,4 +1,4 @@
-const ast = {
+let ast = {
     HashTable: {},
     entry: "",
     exitStep: [],
@@ -9,7 +9,14 @@ let curStep = "";
 let curLine = 1;
 
 export function parse(code) {
+    curStep = "";
     curLine = 1;
+    ast = {
+        HashTable: {},
+        entry: "",
+        exitStep: [],
+        vars: {},
+    };
     if (typeof code != "string") {
         throw new TypeError("Expected code to be a string");
     }
