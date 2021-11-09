@@ -32,13 +32,13 @@ export default defineComponent({
     margin-top: -40px;
 }
 #chat > div.sc-chat-window.opened {
-    z-index: 9999;
+    z-index: 1999;
 }
 #chat > div.sc-launcher.opened {
-    z-index: 9999;
+    z-index: 1999;
 }
 #chat > div.sc-launcher {
-    z-index: 9999;
+    z-index: 1999;
 }
 .sc-header--img {
     max-height: 2.5em;
@@ -49,5 +49,8 @@ export default defineComponent({
 }
 .sc-header--title.enabled {
     pointer-events: none;
+}
+.el-message-box {
+    max-width: 90%;
 }
 </style>
