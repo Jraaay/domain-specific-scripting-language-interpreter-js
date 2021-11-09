@@ -28,6 +28,7 @@ export function interpret(
         return {
             text: text,
             end: ast.exitStep.includes(env.curStep),
+            silence: ast.HashTable[env.curStep].silence.args ? ast.HashTable[env.curStep].silence.args : 0,
         };
     } else if (silence) {
         if (ast.HashTable[env.curStep].silence) {
@@ -50,7 +51,7 @@ export function interpret(
         }
         if (!flag) {
             if (ast.HashTable[env.curStep].default) {
-                env.curStep = ast.HashTable[env.curStep].default;
+                env.curStep = ast.HashTable[env.curStep].default.args;
             } else {
                 throw new Error("No default step");
             }
@@ -67,5 +68,6 @@ export function interpret(
     return {
         text: text,
         end: ast.exitStep.includes(env.curStep),
+        silence: ast.HashTable[env.curStep].silence.args ? ast.HashTable[env.curStep].silence.args : 0,
     };
 }
