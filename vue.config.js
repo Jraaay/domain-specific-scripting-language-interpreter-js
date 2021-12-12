@@ -14,4 +14,5 @@ module.exports = {
             }),
         ],
     },
+    productionSourceMap: false,
 };

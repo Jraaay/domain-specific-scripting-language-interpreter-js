@@ -84,94 +84,171 @@ export default defineComponent({
         }
         function openChat() {
             // called when the user clicks on the fab button to open the chat
-            const vars = getVars(bus.ast);
-            if (Object.keys(vars).length > 0) {
-                let text = "请按顺序输入以下参数，以空格为分割：";
-                for (let i of Object.keys(vars)) {
-                    text += "\n" + i;
+            ElMessageBox.confirm(
+                "请问你是要新建一个用户还是选择已创建的用户？",
+                "选择",
+                {
+                    confirmButtonText: "新建",
+                    cancelButtonText: "选择",
                 }
-                ElMessageBox.prompt(text, "Var Init", {
-                    confirmButtonText: "OK",
-                    cancelButtonText: "Cancel",
-                    inputPattern: RegExp(
-                        "^([^\\s]+(\\s|$)){" + Object.keys(vars).length + "}$"
-                    ),
-                    inputErrorMessage: "请输入正确参数",
-                })
-                    .then(({ value }) => {
-                        const varList = value.split(" ");
-                        let j = 0;
-                        for (let i of Object.keys(vars)) {
-                            vars[i] = varList[j];
-                            j++;
-                        }
-                        tmp.env = initEnv(bus.ast, vars);
-                        tmp.messageList = [];
-                        try {
-                            const answer = interpret(
-                                bus.ast,
-                                tmp.env,
-                                "",
-                                true,
-                                // bus.ast.exitStep.includes(tmp.env.curStep),
-                                false
+            )
+                .then(() => {
+                    ElMessageBox.prompt("请输入用户名", "新建用户", {
+                        confirmButtonText: "确定",
+                        cancelButtonText: "取消",
+                    }).then((username) => {
+                        username = username.value;
+                        if (Object.keys(bus.userList).includes(username)) {
+                            ElMessageBox.alert(
+                                "用户名已存在，请重新输入",
+                                "错误"
                             );
-                            console.log(answer);
-                            if (answer.listen > 0) {
-                                tmp.timeoutID = setTimeout(() => {
-                                    sendMessage(replyByRobot("", true));
-                                    console.log("End timer");
-                                }, answer.listen * 1000);
-                                console.log("Start timer");
+                            return;
+                        }
+                        tmp.curUser = username;
+                        const vars = getVars(bus.ast);
+                        if (Object.keys(vars).length > 0) {
+                            let text = "请按顺序输入以下参数，以空格为分割：";
+                            for (let i of Object.keys(vars)) {
+                                text += "\n" + i;
                             }
-                            sendMessage(answer.text);
+                            ElMessageBox.prompt(text, "Var Init", {
+                                confirmButtonText: "OK",
+                                cancelButtonText: "Cancel",
+                                inputPattern: RegExp(
+                                    "^([^\\s]+(\\s|$)){" +
+                                        Object.keys(vars).length +
+                                        "}$"
+                                ),
+                                inputErrorMessage: "请输入正确参数",
+                            })
+                                .then(({ value }) => {
+                                    const varList = value.split(" ");
+                                    let j = 0;
+                                    for (let i of Object.keys(vars)) {
+                                        vars[i] = varList[j];
+                                        j++;
+                                    }
+                                    tmp.env = initEnv(bus.ast, vars);
+                                    tmp.messageList = [];
+                                    bus.userList[username] = {
+                                        username: username,
+                                        env: tmp.env,
+                                        messageList: tmp.messageList,
+                                    };
+                                    console.log(bus.userList);
+                                    try {
+                                        const answer = interpret(
+                                            bus.ast,
+                                            tmp.env,
+                                            "",
+                                            true,
+                                            // bus.ast.exitStep.includes(tmp.env.curStep),
+                                            false
+                                        );
+                                        console.log(answer);
+                                        if (answer.listen > 0) {
+                                            tmp.timeoutID = setTimeout(() => {
+                                                sendMessage(
+                                                    replyByRobot("", true)
+                                                );
+                                                console.log("End timer");
+                                            }, answer.listen * 1000);
+                                            console.log("Start timer");
+                                        }
+                                        sendMessage(answer.text);
+                                        tmp.stop = false;
+                                        tmp.isChatOpen = true;
+                                        tmp.newMessagesCount = 0;
+                                    } catch (e) {
+                                        ElMessage.error(e.message);
+                                        tmp.stop = true;
+                                    }
+                                })
+                                .catch(() => {
+                                    ElMessage({
+                                        type: "info",
+                                        message: "Input canceled",
+                                    });
+                                });
+                        } else {
+                            tmp.env = initEnv(bus.ast, {});
+                            tmp.messageList = [];
+                            try {
+                                const answer = interpret(
+                                    bus.ast,
+                                    tmp.env,
+                                    "",
+                                    true,
+                                    // bus.ast.exitStep.includes(tmp.env.curStep),
+                                    false
+                                );
+                                console.log(answer);
+                                if (answer.listen > 0) {
+                                    tmp.timeoutID = setTimeout(() => {
+                                        sendMessage(replyByRobot("", true));
+                                        console.log("End timer");
+                                    }, answer.listen * 1000);
+                                    console.log("Start timer");
+                                }
+                                sendMessage(answer.text);
+                                tmp.stop = false;
+                                tmp.isChatOpen = true;
+                                tmp.newMessagesCount = 0;
+                            } catch (e) {
+                                ElMessage.error(e.message);
+                                tmp.stop = true;
+                            }
+                        }
+                    });
+                })
+                .catch(() => {
+                    const userListStr =
+                        Object.keys(bus.userList).length > 0
+                            ? Object.keys(bus.userList).join(", ")
+                            : "无";
+                    ElMessageBox.prompt(
+                        "请输入用户名，用户列表：" + userListStr,
+                        "选择用户",
+                        {
+                            confirmButtonText: "确定",
+                            cancelButtonText: "取消",
+                        }
+                    )
+                        .then((username) => {
+                            username = username.value;
+                            console.log(username);
+                            console.log(bus);
+                            console.log(Object.keys(bus.userList));
+                            if (!Object.keys(bus.userList).includes(username)) {
+                                ElMessageBox.alert(
+                                    "用户名不存在，请重新输入",
+                                    "错误"
+                                );
+                                return;
+                            }
+                            tmp.curUser = username;
+                            tmp.env = bus.userList[username].env;
+                            tmp.messageList =
+                                bus.userList[username].messageList;
                             tmp.stop = false;
                             tmp.isChatOpen = true;
                             tmp.newMessagesCount = 0;
-                        } catch (e) {
-                            ElMessage.error(e.message);
-                            tmp.stop = true;
-                        }
-                    })
-                    .catch(() => {
-                        ElMessage({
-                            type: "info",
-                            message: "Input canceled",
+                        })
+                        .catch(() => {
+                            ElMessage({
+                                type: "info",
+                                message: "Input canceled",
+                            });
                         });
-                    });
-            } else {
-                tmp.env = initEnv(bus.ast, {});
-                tmp.messageList = [];
-                try {
-                    const answer = interpret(
-                        bus.ast,
-                        tmp.env,
-                        "",
-                        true,
-                        // bus.ast.exitStep.includes(tmp.env.curStep),
-                        false
-                    );
-                    console.log(answer);
-                    if (answer.listen > 0) {
-                        tmp.timeoutID = setTimeout(() => {
-                            sendMessage(replyByRobot("", true));
-                            console.log("End timer");
-                        }, answer.listen * 1000);
-                        console.log("Start timer");
-                    }
-                    sendMessage(answer.text);
-                    tmp.stop = false;
-                    tmp.isChatOpen = true;
-                    tmp.newMessagesCount = 0;
-                } catch (e) {
-                    ElMessage.error(e.message);
-                    tmp.stop = true;
-                }
-            }
+                });
         }
         function closeChat() {
             // called when the user clicks on the botton to close the chat
-            tmp.env = {};
+            if (Object.keys(bus.userList).includes(tmp.curUser)) {
+                bus.userList[tmp.curUser].env = tmp.env;
+                bus.userList[tmp.curUser].messageList = tmp.messageList;
+            }
             tmp.isChatOpen = false;
             clearTimeout(tmp.timeoutID);
             tmp.timeoutID = null;
@@ -181,6 +258,7 @@ export default defineComponent({
             // leverage pagination for loading another page of messages
         }
         const tmp = reactive({
+            curUser: "",
             code: "const noop = () => {}",
             participants: [
                 {
@@ -250,6 +328,19 @@ export default defineComponent({
                     if (input.length > 0) {
                         input[0].contentEditable = "false";
                         input[0].setAttribute("placeholder", "聊天已结束");
+                        bus.userList[tmp.curUser].messageList = tmp.messageList;
+                        console.log("Chat closed");
+                        tmp.messageList = JSON.parse(
+                            JSON.stringify(
+                                bus.userList[tmp.curUser].messageList
+                            )
+                        );
+                        tmp.env = JSON.parse(
+                            JSON.stringify(bus.userList[tmp.curUser].env)
+                        );
+                        console.log(tmp.env);
+                        delete bus.userList[tmp.curUser];
+                        console.log(bus.userList);
                     }
                 } else {
                     const input = document.getElementsByClassName(

@@ -53,6 +53,7 @@ export const bus = reactive({
     activeCode: activeCode,
     defaultCode: defaultCode,
     ast: ast,
+    userList: {},
 });
 
 watch(
