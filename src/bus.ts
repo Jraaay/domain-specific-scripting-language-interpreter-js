@@ -1,6 +1,7 @@
 import { reactive, watch } from "vue";
-import { parse } from "@/utils/parse";
+import { parse } from "./utils/parse";
 import { ElMessage } from "element-plus";
+import { AST, ENV } from "./utils/interface";
 
 let activeCode = "";
 const defaultCode = `Step welcome
@@ -39,11 +40,10 @@ if (localStorage.activeCode) {
 } else {
     activeCode = defaultCode;
 }
-let ast
+let ast: AST;
 try {
     ast = parse(activeCode);
-}
-catch (e) {
+} catch (e: any) {
     ElMessage.error(e.message);
     ElMessage.error("代码解析失败，已将代码应用为默认代码");
     ast = parse(defaultCode);
@@ -53,7 +53,17 @@ export const bus = reactive({
     activeCode: activeCode,
     defaultCode: defaultCode,
     ast: ast,
-    userList: {},
+    userList: {} as {
+        [key: string]: {
+            username: string;
+            env: ENV;
+            messageList: {
+                author: string;
+                type: string;
+                data: { text: string };
+            }[];
+        };
+    },
 });
 
 watch(
@@ -63,7 +73,7 @@ watch(
         try {
             bus.ast = parse(val);
             ElMessage.success("代码应用成功");
-        } catch (e) {
+        } catch (e: any) {
             ElMessage.error(e.message);
         }
     }

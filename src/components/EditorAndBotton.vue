@@ -64,17 +64,19 @@
     </el-row>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent, reactive, toRefs } from "vue";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import MonacoEditor from "monaco-editor-vue3";
 import { ElMessageBox, ElMessage } from "element-plus";
-import { bus } from "@/bus.js";
+import { bus } from "@/bus";
 
 export default defineComponent({
     name: "EditorAndBotton",
     components: { MonacoEditor },
     setup() {
-        function onChange(val) {
+        function onChange(val: string) {
             tmp.codeText = val;
         }
         function applyScript() {
@@ -152,11 +154,11 @@ export default defineComponent({
         function reset() {
             tmp.codeText = bus.defaultCode;
         }
-        function beforeUpload(file) {
+        function beforeUpload(file: Blob) {
             const reader = new FileReader();
             reader.onload = function fileReadCompleted() {
                 // 当读取完成时，内容只在`reader.result`中
-                tmp.codeText = reader.result;
+                tmp.codeText = reader.result as string;
             };
             reader.readAsText(file);
             return false;

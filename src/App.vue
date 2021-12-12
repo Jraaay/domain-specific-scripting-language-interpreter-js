@@ -5,15 +5,14 @@
     <EditorAndBotton />
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent } from "vue";
-import Chat from "./components/Chat";
-import EditorAndBotton from "./components/EditorAndBotton";
+import Chat from "./components/Chat.vue";
+import EditorAndBotton from "./components/EditorAndBotton.vue";
 
 export default defineComponent({
     name: "App",
     components: { Chat, EditorAndBotton },
-    setup() {},
 });
 </script>
 

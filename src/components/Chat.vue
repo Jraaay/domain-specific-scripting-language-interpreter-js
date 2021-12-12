@@ -23,16 +23,17 @@
     />
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent, reactive, toRefs, watch } from "vue";
-import { bus } from "@/bus.js";
+import { bus } from "@/bus";
 import { ElMessageBox, ElMessage } from "element-plus";
-import { getVars, initEnv, interpret } from "@/utils/interpreter.js";
+import { getVars, initEnv, interpret } from "@/utils/interpreter";
+import { ENV } from "@/utils/interface";
 
 export default defineComponent({
     name: "Chat",
     setup() {
-        function sendMessage(text) {
+        function sendMessage(text: string) {
             if (text.length > 0) {
                 tmp.newMessagesCount = tmp.isChatOpen
                     ? tmp.newMessagesCount
@@ -40,11 +41,11 @@ export default defineComponent({
                 tmp.onMessageWasSent({
                     author: "Robot",
                     type: "text",
-                    data: { text },
+                    data: { text: text },
                 });
             }
         }
-        function replyByRobot(message, silence = false) {
+        function replyByRobot(message: string, silence = false) {
             try {
                 const answer = interpret(
                     bus.ast,
@@ -64,20 +65,24 @@ export default defineComponent({
                 }
                 tmp.stop = answer.end;
                 return answer.text;
-            } catch (e) {
+            } catch (e: any) {
                 ElMessage.error(e.message);
                 tmp.stop = true;
-                return;
+                return "error";
             }
         }
-        function onMessageWasSent(message) {
+        function onMessageWasSent(message: {
+            author: string;
+            type: string;
+            data: { text: string };
+        }) {
             // called when the user sends a message
             tmp.messageList = [...tmp.messageList, message];
             if (tmp.stop) {
                 return;
             }
             if (message.author != "Robot") {
-                clearTimeout(tmp.timeoutID);
+                clearTimeout(tmp.timeoutID == -1 ? undefined : tmp.timeoutID);
                 console.log("Stop timer");
                 sendMessage(replyByRobot(message.data.text));
             }
@@ -96,8 +101,8 @@ export default defineComponent({
                     ElMessageBox.prompt("请输入用户名", "新建用户", {
                         confirmButtonText: "确定",
                         cancelButtonText: "取消",
-                    }).then((username) => {
-                        username = username.value;
+                    }).then((data) => {
+                        const username = data.value;
                         if (Object.keys(bus.userList).includes(username)) {
                             ElMessageBox.alert(
                                 "用户名已存在，请重新输入",
@@ -160,7 +165,7 @@ export default defineComponent({
                                         tmp.stop = false;
                                         tmp.isChatOpen = true;
                                         tmp.newMessagesCount = 0;
-                                    } catch (e) {
+                                    } catch (e: any) {
                                         ElMessage.error(e.message);
                                         tmp.stop = true;
                                     }
@@ -195,7 +200,7 @@ export default defineComponent({
                                 tmp.stop = false;
                                 tmp.isChatOpen = true;
                                 tmp.newMessagesCount = 0;
-                            } catch (e) {
+                            } catch (e: any) {
                                 ElMessage.error(e.message);
                                 tmp.stop = true;
                             }
@@ -215,8 +220,8 @@ export default defineComponent({
                             cancelButtonText: "取消",
                         }
                     )
-                        .then((username) => {
-                            username = username.value;
+                        .then((data) => {
+                            const username = data.value;
                             console.log(username);
                             console.log(bus);
                             console.log(Object.keys(bus.userList));
@@ -250,8 +255,8 @@ export default defineComponent({
                 bus.userList[tmp.curUser].messageList = tmp.messageList;
             }
             tmp.isChatOpen = false;
-            clearTimeout(tmp.timeoutID);
-            tmp.timeoutID = null;
+            clearTimeout(tmp.timeoutID == -1 ? undefined : tmp.timeoutID);
+            tmp.timeoutID = -1;
         }
         function handleScrollToTop() {
             // called when the user scrolls message list to top
@@ -268,7 +273,11 @@ export default defineComponent({
                 },
             ], // the list of all the participant of the conversation. `name` is the user name, `id` is used to establish the author of a message, `imageUrl` is supposed to be the user avatar.
             titleImageUrl: "img/title.png",
-            messageList: [], // the list of the messages to show, can be paginated and adjusted dynamically
+            messageList: [] as {
+                author: string;
+                type: string;
+                data: { text: string };
+            }[], // the list of the messages to show, can be paginated and adjusted dynamically
             newMessagesCount: 0,
             isChatOpen: false, // to determine whether the chat window should be open or closed
             showTypingIndicator: "", // when set to a value matching the participant.id it shows the typing indicator for the specific user
@@ -304,27 +313,28 @@ export default defineComponent({
             closeChat,
             handleScrollToTop,
             activeCode: bus.activeCode,
-            env: {},
+            env: {} as ENV,
             stop: true,
-            timeoutID: null,
+            timeoutID: -1,
         });
         watch(
             () => bus.activeCode,
             () => {
                 closeChat();
-                tmp.env = {};
+                tmp.env = {} as ENV;
                 tmp.stop = true;
-                clearTimeout(tmp.timeoutID);
-                tmp.timeoutID = null;
+                clearTimeout(tmp.timeoutID == -1 ? undefined : tmp.timeoutID);
+                tmp.timeoutID = -1;
             }
         );
         watch(
             () => tmp.stop,
             () => {
                 if (tmp.stop) {
-                    const input = document.getElementsByClassName(
-                        "sc-user-input--text"
-                    );
+                    const input: HTMLElement[] =
+                        document.getElementsByClassName(
+                            "sc-user-input--text"
+                        ) as unknown as HTMLElement[];
                     if (input.length > 0) {
                         input[0].contentEditable = "false";
                         input[0].setAttribute("placeholder", "聊天已结束");
@@ -343,9 +353,10 @@ export default defineComponent({
                         console.log(bus.userList);
                     }
                 } else {
-                    const input = document.getElementsByClassName(
-                        "sc-user-input--text"
-                    );
+                    const input: HTMLElement[] =
+                        document.getElementsByClassName(
+                            "sc-user-input--text"
+                        ) as unknown as HTMLElement[];
                     if (input.length > 0) {
                         input[0].contentEditable = "true";
                         input[0].setAttribute("placeholder", "请输入");
