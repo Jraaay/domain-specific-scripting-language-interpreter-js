@@ -249,15 +249,9 @@ function processBranch(args: string, strings: string[]) {
     const texts = args.split(",");
 
     // 如果参数不是两个，则抛出异常
-    if (texts.length == 0) {
+    if (texts.length != 2) {
         throw new Error(
-            "Expected branch to have at least one text. At Line: " +
-                curLine.toString()
-        );
-    } else if (texts.length > 2) {
-        throw new Error(
-            "Expected branch to have only two args. At Line: " +
-                curLine.toString()
+            "Expected branch to have two args. At Line: " + curLine.toString()
         );
     }
 
@@ -294,10 +288,9 @@ function processBranch(args: string, strings: string[]) {
  */
 function processSilence(args: string) {
     // 如果参数个数不是 1，则抛出异常
-    if (args.split(" ").length > 1) {
+    if (args.split(" ").length != 1) {
         throw new Error(
-            "Expected silence to have only one step. At Line: " +
-                curLine.toString()
+            "Expected silence to have one step. At Line: " + curLine.toString()
         );
     }
     // 将 stepId 加入到 silence 列表中
@@ -310,10 +303,9 @@ function processSilence(args: string) {
  */
 function processDefault(args: string) {
     // 如果参数个数不是 1，则抛出异常
-    if (args.split(" ").length > 1) {
+    if (args.split(" ").length != 1) {
         throw new Error(
-            "Expected default to have only one step. At Line: " +
-                curLine.toString()
+            "Expected default to have one step. At Line: " + curLine.toString()
         );
     }
     // 将 stepId 加入到 default 列表中
@@ -331,28 +323,24 @@ function processExit() {
 /**
  * 验证 ast 语法树的正确性
  */
-function validate() {
+export function validate(astToValidate: AST = ast): void {
     // 如果脚本树为空，则抛出异常
-    if (Object.keys(ast.HashTable).length == 0) {
+    if (Object.keys(astToValidate.HashTable).length == 0) {
         throw new Error("Expected at least one step");
     }
 
-    // 如果脚本树中没有 entry，则抛出异常
-    if (ast.entry == undefined) {
-        throw new Error("Expected entry step");
-    }
-
     // 如果脚本树中 exit 列表的数量为0，则抛出异常
-    if (ast.exitStep.length == 0) {
+    if (astToValidate.exitStep.length == 0) {
         throw new Error("Expected at least one exit step");
     }
     // 遍历脚本树中的每一个 step
-    for (const stepId of Object.keys(ast.HashTable)) {
-        const step = ast.HashTable[stepId];
+    for (const stepId of Object.keys(astToValidate.HashTable)) {
+        const step = astToValidate.HashTable[stepId];
 
         // 如果 step 中的 default 列表为空，而且不是 exit step，则抛出异常
-        if (!Object.keys(step).includes("default")) {
-            if (!ast.exitStep.includes(stepId)) {
+        const defaultList = step.default;
+        if (!defaultList) {
+            if (!astToValidate.exitStep.includes(stepId)) {
                 const line = step.line;
                 if (line) {
                     throw new Error(
@@ -364,62 +352,59 @@ function validate() {
             }
         } else {
             // 如果 default 列表中的 step 不存在，则抛出异常
-            const defaultList = step.default;
-            if (defaultList) {
-                if (!Object.keys(ast.HashTable).includes(defaultList.args)) {
-                    throw new Error(
-                        "Default step " +
-                            defaultList.args +
-                            " is invalid. At Line: " +
-                            defaultList.line.toString()
-                    );
-                }
+            if (
+                !Object.keys(astToValidate.HashTable).includes(defaultList.args)
+            ) {
+                throw new Error(
+                    "Default step " +
+                        defaultList.args +
+                        " is invalid. At Line: " +
+                        defaultList.line.toString()
+                );
             }
         }
 
         // 如果存在 silence 列表，则验证 silence 列表中的 step 是否存在
         const silenceList = step.silence;
         if (silenceList) {
-            if (Object.keys(step).includes("silence")) {
-                if (!Object.keys(ast.HashTable).includes(silenceList.args)) {
-                    throw new Error(
-                        "Silence step " +
-                            silenceList.args +
-                            " is invalid. At Line: " +
-                            silenceList.line.toString()
-                    );
-                }
+            if (
+                !Object.keys(astToValidate.HashTable).includes(silenceList.args)
+            ) {
+                throw new Error(
+                    "Silence step " +
+                        silenceList.args +
+                        " is invalid. At Line: " +
+                        silenceList.line.toString()
+                );
             }
         }
 
-        // 如果存在 listen 列表，则验证 listen 列表中的 step 是否存在
+        // 如果存在 listen，则验证 listen 的时间是否有效
         const listenList = step.listen;
         if (listenList) {
-            if (Object.keys(step).includes("listen")) {
-                if (listenList.time <= 0) {
-                    throw new Error(
-                        "Listen time is invalid. At Line: " +
-                            listenList.line.toString()
-                    );
-                }
+            if (listenList.time <= 0) {
+                throw new Error(
+                    "Listen time is invalid. At Line: " +
+                        listenList.line.toString()
+                );
             }
         }
 
         // 如果存在 branch 列表，则验证 branch 列表中的 step 是否存在
         const branchList = step.branch;
         if (branchList) {
-            if (Object.keys(step).includes("branch")) {
-                for (const branch of branchList) {
-                    if (
-                        !Object.keys(ast.HashTable).includes(branch.nextStepId)
-                    ) {
-                        throw new Error(
-                            "Branch step " +
-                                branch.nextStepId +
-                                " is invalid. At Line: " +
-                                branch.line.toString()
-                        );
-                    }
+            for (const branch of branchList) {
+                if (
+                    !Object.keys(astToValidate.HashTable).includes(
+                        branch.nextStepId
+                    )
+                ) {
+                    throw new Error(
+                        "Branch step " +
+                            branch.nextStepId +
+                            " is invalid. At Line: " +
+                            branch.line.toString()
+                    );
                 }
             }
         }

@@ -47,6 +47,8 @@ export function interpret(
                     text += i.args;
                 } else if (i.type === "var") {
                     text += env.vars[i.args];
+                } else {
+                    throw new Error("Speak args type error");
                 }
             }
         }
@@ -76,15 +78,13 @@ export function interpret(
         }
     } else {
         let flag = false;
-        if (ast.HashTable[env.curStep].branch) {
-            const branch = ast.HashTable[env.curStep].branch;
-            if (branch) {
-                for (const i of branch) {
-                    if (answerFromUser.includes(i.answer)) {
-                        env.curStep = i.nextStepId;
-                        flag = true;
-                        break;
-                    }
+        const branch = ast.HashTable[env.curStep].branch;
+        if (branch) {
+            for (const i of branch) {
+                if (answerFromUser.includes(i.answer)) {
+                    env.curStep = i.nextStepId;
+                    flag = true;
+                    break;
                 }
             }
         }
@@ -105,6 +105,8 @@ export function interpret(
                 text += i.args;
             } else if (i.type === "var") {
                 text += env.vars[i.args];
+            } else {
+                throw new Error("Speak args type error");
             }
         }
     }

@@ -1,29 +1,25 @@
-# domain-specific-scripting-language-interpreter-ts
+# Domain-specific Scripting Language Interpreter
 
-## Project setup
-```
-yarn install
-```
+## 这是一个领域特定脚本语言的解释器
 
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
+> 该领域特定脚本语言能够描述在线客服机器人的自动应答逻辑
+> 该解释器解释执行这个脚本,可以根据用户的不同输入,根据脚本的逻辑设计给出相应的应答。
 
-### Compiles and minifies for production
-```
-yarn build
-```
+基本要求:
 
-### Run your unit tests
-```
-yarn test:unit
-```
+-   脚本语言的语法可以自由定义,只要语义上满足描述客服机器人自动应答逻辑的要求。
+-   程序输入输出形式不限,可以简化为纯命令行界面。
+-   应该给出几种不同的脚本范例,对不同脚本范例解释器执行之后会有不同的行为表现。
 
-### Lints and fixes files
-```
-yarn lint
-```
+评分标准：
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+-   风格：
+    -   满分 10 分,其中代码注释 4 分,命名 4 分,其它 2 分
+-   设计和实现：
+    -   满分 20 分,其中数据结构 5 分,模块划分 5 分,功能 5 分,文档 5 分
+-   接口：
+    -   满分 10 分,其中程序间接口 5 分,人机接口 5 分
+-   测试
+    -   满分 20 分,测试桩 10 分,自动测试脚本 10 分
+-   记法
+    -   满分 10 分,文档中对此脚本语言的语法的准确描述
