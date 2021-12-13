@@ -1,3 +1,11 @@
+<!--
+ * @FileDescription: 这是编辑和按钮组件
+ * @Author: Jray
+ * @Date: 2021-11-08
+ * @LastEditors: Jray
+ * @LastEditTime: 2021-12-13
+-->
+
 <template>
     <div id="editor">
         <MonacoEditor
@@ -76,9 +84,17 @@ export default defineComponent({
     name: "EditorAndBotton",
     components: { MonacoEditor },
     setup() {
-        function onChange(val: string) {
-            tmp.codeText = val;
+        /**
+         * 改变代码后保存
+         * @param code 改变后的代码
+         */
+        function onChange(code: string) {
+            tmp.codeText = code;
         }
+
+        /**
+         * 应用脚本
+         */
         function applyScript() {
             if (bus.activeCode == tmp.codeText) {
                 ElMessage.warning("当前脚本已经生效");
@@ -87,6 +103,10 @@ export default defineComponent({
                 bus.activeCode = tmp.codeText;
             }
         }
+
+        /**
+         * 下载当前脚本
+         */
         function download() {
             ElMessageBox.prompt("请输入下载的文件名", "下载", {
                 confirmButtonText: "下载",
@@ -119,6 +139,10 @@ export default defineComponent({
                     });
                 });
         }
+
+        /**
+         * 下载当前生效的脚本
+         */
         function downloadActive() {
             ElMessageBox.prompt("请输入下载的文件名", "下载", {
                 confirmButtonText: "下载",
@@ -151,18 +175,30 @@ export default defineComponent({
                     });
                 });
         }
+
+        /**
+         * 重置脚本
+         */
         function reset() {
             tmp.codeText = bus.defaultCode;
         }
+
+        /**
+         * 上传脚本
+         * @param file 上传的文件
+         */
         function beforeUpload(file: Blob) {
             const reader = new FileReader();
             reader.onload = function fileReadCompleted() {
-                // 当读取完成时，内容只在`reader.result`中
                 tmp.codeText = reader.result as string;
             };
             reader.readAsText(file);
             return false;
         }
+
+        /**
+         * 设置变量，以便于 HTML 中使用
+         */
         const tmp = reactive({
             codeText: "",
             onChange,
@@ -172,6 +208,8 @@ export default defineComponent({
             reset,
             beforeUpload,
         });
+
+        // 尝试获取本地存储的脚本
         if (localStorage.codeText) {
             tmp.codeText = localStorage.codeText;
         } else {
@@ -180,7 +218,8 @@ export default defineComponent({
         return toRefs(tmp);
     },
     watch: {
-        codeText(val) {
+        // 监听 codeText 变化，并将变化保存到本地存储
+        codeText(val: string) {
             localStorage.setItem("codeText", val);
         },
     },

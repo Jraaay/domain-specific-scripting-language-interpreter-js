@@ -1,6 +1,14 @@
+<!--
+ * @FileDescription: 这是主界面组件
+ * @Author: Jray
+ * @Date: 2021-11-08
+ * @LastEditors: Jray
+ * @LastEditTime: 2021-12-13
+-->
+
 <template>
     <Chat id="chat" />
-    <img id="logo" alt="Jray logo" src="./assets/logo.png" style="max" />
+    <img id="logo" alt="Jray logo" src="./assets/logo.png" />
     <h1>Domain-specific Scripting Language Interpreter</h1>
     <EditorAndBotton />
 </template>

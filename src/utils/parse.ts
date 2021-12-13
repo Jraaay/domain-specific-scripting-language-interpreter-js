@@ -1,4 +1,4 @@
-import { AST } from "./interface";
+import { AST, SPEAK } from "./interface";
 
 /**
  * @desc 语法分析树
@@ -184,11 +184,7 @@ function processSpeak(args: string, strings: string[]) {
     let stringCount = 0;
 
     // 初始化该 step 的 speak 列表
-    const speak: {
-        type: string;
-        args: string;
-        line: number;
-    }[] = [];
+    const speak: SPEAK[] = [];
 
     // 处理 speak 的每一个部分
     for (let text of texts) {
