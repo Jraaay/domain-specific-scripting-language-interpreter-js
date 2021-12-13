@@ -38,6 +38,7 @@ export function interpret(
     entry = false,
     silence = false
 ): ANSWER {
+    const culculate = ast.HashTable[env.curStep].culculate;
     if (entry) {
         let text = "";
         const speak = ast.HashTable[env.curStep].speak;
@@ -75,6 +76,18 @@ export function interpret(
             env.curStep = defaultList.args;
         } else {
             throw new Error("No silence step or default step");
+        }
+    } else if (culculate) {
+        try {
+            let tmpCul = culculate[2].replace(
+                culculate[0],
+                env.vars[culculate[0]]
+            );
+            tmpCul = tmpCul.replace("INPUT", answerFromUser);
+            env.vars[culculate[0]] = eval(tmpCul).toString();
+            env.curStep = culculate[1];
+        } catch (e) {
+            throw new Error("Culculate error");
         }
     } else {
         let flag = false;

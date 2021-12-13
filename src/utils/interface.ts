@@ -67,6 +67,8 @@ export interface HASHTABLE {
         silence?: SILENCE;
         /** branch 类型 */
         branch?: BRANCH[];
+        /** culculate 类型 */
+        culculate?: [string, string, string];
     };
 }
 

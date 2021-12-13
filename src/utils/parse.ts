@@ -121,6 +121,9 @@ function parseToken(tokens: string[], strings: string[]) {
         case "default":
             processDefault(args);
             break;
+        case "culculate":
+            processCulculate(args);
+            break;
         case "exit":
             processExit();
             break;
@@ -310,6 +313,18 @@ function processDefault(args: string) {
     }
     // 将 stepId 加入到 default 列表中
     ast.HashTable[curStep].default = { args: args, line: curLine };
+}
+
+/**
+ *
+ */
+function processCulculate(args: string) {
+    args = args.replace(/#.*$/, "");
+    ast.HashTable[curStep].culculate = [
+        args.split(",")[0].trim(),
+        args.split(",")[1].trim(),
+        args.split(",")[2].trim(),
+    ];
 }
 
 /**

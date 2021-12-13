@@ -283,3 +283,35 @@ test("Test interpret: not entry speak type error", () => {
         );
     }).toThrow("Speak args type error");
 });
+
+const ast7 = JSON.parse(
+    '{"HashTable":{"welcome":{"line":1,"speak":[{"type":"var","args":"$name","line":2},{"type":"string","args":"您好，请问有什么可以帮您?","line":2}],"listen":{"time":5,"line":3},"branch":[{"answer":"充值","nextStepId":"chargeProc","line":4},{"answer":"投诉","nextStepId":"complainProc","line":5},{"answer":"账单","nextStepId":"billProc","line":6}],"silence":{"args":"silenceProc","line":7},"default":{"args":"defaultProc","line":8}},"complainProc":{"line":9,"speak":[{"type":"string","args":"您的意见是我们改进工作的动力，请问您还有什么补充?","line":10}],"listen":{"time":5,"line":11},"default":{"args":"thanks","line":12}},"thanks":{"line":13,"speak":[{"type":"string","args":"感谢您的来电，再见","line":14}]},"billProc":{"line":16,"speak":[{"type":"string","args":"您的本月账单是","line":17},{"type":"var","args":"$amount","line":17},{"type":"string","args":"元，感谢您的来电，再见","line":17}]},"silenceProc":{"line":19,"speak":[{"type":"string","args":"听不清，请您大声一点可以吗?","line":20}],"listen":{"time":5,"line":21},"branch":[{"answer":"充值","nextStepId":"chargeProc","line":22},{"answer":"投诉","nextStepId":"complainProc","line":23},{"answer":"账单","nextStepId":"billProc","line":24}],"silence":{"args":"silenceProc","line":25},"default":{"args":"defaultProc","line":26}},"defaultProc":{"line":27,"speak":[{"type":"string","args":"抱歉，我不明白你的意思","line":28}],"branch":[{"answer":"充值","nextStepId":"chargeProc","line":29},{"answer":"投诉","nextStepId":"complainProc","line":30},{"answer":"账单","nextStepId":"billProc","line":31}],"silence":{"args":"silenceProc","line":32},"default":{"args":"defaultProc","line":33}},"chargeProc":{"line":34,"speak":[{"type":"string","args":"请输入需要充值的金额","line":35}],"culculate":["$amount","chargeSuccessProc","$amount + INPUT"],"default":{"args":"defaultProc","line":37}},"chargeSuccessProc":{"line":38,"speak":[{"type":"string","args":"充值成功，您的余额为","line":39},{"type":"var","args":"$amount","line":39},{"type":"string","args":"元，请问还有什么可以帮到您？","line":39}],"branch":[{"answer":"充值","nextStepId":"chargeProc","line":40},{"answer":"投诉","nextStepId":"complainProc","line":41},{"answer":"账单","nextStepId":"billProc","line":42}],"silence":{"args":"silenceProc","line":43},"default":{"args":"defaultProc","line":44}}},"entry":"welcome","exitStep":["thanks","billProc"],"vars":{"$name":"","$amount":""}}'
+);
+
+test("Test interpret: Culculate", () => {
+    expect(
+        interpret(
+            ast7,
+            { curStep: "chargeProc", vars: { $amount: "1", $name: "2" } },
+            "10",
+            false,
+            false
+        )
+    ).toEqual({
+        text: "充值成功，您的余额为11元，请问还有什么可以帮到您？",
+        end: false,
+        listen: 0,
+    });
+});
+
+test("Test interpret: Culculate error", () => {
+    expect(() => {
+        interpret(
+            ast7,
+            { curStep: "chargeProc", vars: { $amount: "1", $name: "2" } },
+            "asdasd",
+            false,
+            false
+        );
+    }).toThrow("Culculate error");
+});

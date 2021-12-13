@@ -390,6 +390,7 @@ export default defineComponent({
                 tmp.stop = true;
                 clearTimeout(tmp.timeoutID == -1 ? undefined : tmp.timeoutID);
                 tmp.timeoutID = -1;
+                bus.userList = {};
             }
         );
         watch(
