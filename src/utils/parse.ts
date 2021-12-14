@@ -322,10 +322,15 @@ function processCulculate(args: string) {
     args = args.replace(/#.*$/, "");
     let culculate = ast.hashTable[curStep].culculate;
     if (!culculate) {
-        ast.hashTable[curStep].culculate = [] as string[][];
-    }
-    culculate = ast.hashTable[curStep].culculate;
-    if (culculate) {
+        culculate = [] as string[][];
+        ast.hashTable[curStep].culculate = culculate;
+        culculate.push([
+            args.split(",")[0].trim(),
+            args.split(",")[1].trim(),
+            args.split(",")[2].trim(),
+        ]);
+        ast.hashTable[curStep].culculate = culculate;
+    } else {
         culculate.push([
             args.split(",")[0].trim(),
             args.split(",")[1].trim(),
