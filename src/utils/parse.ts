@@ -2,7 +2,7 @@ import { AST, SPEAK } from "./interface";
 
 /**
  * @desc 语法分析树
- * @param HashTable - 哈希表，存储 stepId 对应的 Step
+ * @param hashTable - 哈希表，存储 stepId 对应的 Step
  * @param entry 入口 stepId
  * @param exitStep 应退出聊天的 stepId 数组
  * @param vars 变量表，存储变量名和变量值
@@ -23,7 +23,7 @@ export function parse(code: string): AST {
 
     // 初始化 ast
     ast = {
-        HashTable: {},
+        hashTable: {},
         entry: "",
         exitStep: [],
         vars: {},
@@ -160,12 +160,12 @@ function processStep(args: string) {
     const stepId = stepIds[0];
 
     // 设置 step 的行号
-    ast.HashTable[stepId] = {
+    ast.hashTable[stepId] = {
         line: curLine,
     };
 
     // 如果这是第一个 step，则设置为 entry
-    if (Object.keys(ast.HashTable).length == 1) {
+    if (Object.keys(ast.hashTable).length == 1) {
         ast.entry = stepId;
     }
 
@@ -220,7 +220,7 @@ function processSpeak(args: string, strings: string[]) {
             );
         }
     }
-    ast.HashTable[curStep].speak = speak;
+    ast.hashTable[curStep].speak = speak;
 }
 
 /**
@@ -239,7 +239,7 @@ function processListen(args: string) {
     }
 
     // 将 time 添加到该 step 的 listen 列表中
-    ast.HashTable[curStep].listen = { time: time, line: curLine };
+    ast.hashTable[curStep].listen = { time: time, line: curLine };
 }
 
 /**
@@ -267,7 +267,7 @@ function processBranch(args: string, strings: string[]) {
     }
 
     // 将第二个参数 stepId 加入到 branch 列表中
-    const branch = ast.HashTable[curStep].branch;
+    const branch = ast.hashTable[curStep].branch;
     if (branch) {
         branch.push({
             answer: strings[0].trim(),
@@ -275,7 +275,7 @@ function processBranch(args: string, strings: string[]) {
             line: curLine,
         });
     } else {
-        ast.HashTable[curStep].branch = [
+        ast.hashTable[curStep].branch = [
             {
                 answer: strings[0].trim(),
                 nextStepId: texts[1].trim(),
@@ -297,7 +297,7 @@ function processSilence(args: string) {
         );
     }
     // 将 stepId 加入到 silence 列表中
-    ast.HashTable[curStep].silence = { args: args, line: curLine };
+    ast.hashTable[curStep].silence = { args: args, line: curLine };
 }
 
 /**
@@ -312,7 +312,7 @@ function processDefault(args: string) {
         );
     }
     // 将 stepId 加入到 default 列表中
-    ast.HashTable[curStep].default = { args: args, line: curLine };
+    ast.hashTable[curStep].default = { args: args, line: curLine };
 }
 
 /**
@@ -320,11 +320,18 @@ function processDefault(args: string) {
  */
 function processCulculate(args: string) {
     args = args.replace(/#.*$/, "");
-    ast.HashTable[curStep].culculate = [
-        args.split(",")[0].trim(),
-        args.split(",")[1].trim(),
-        args.split(",")[2].trim(),
-    ];
+    let culculate = ast.hashTable[curStep].culculate;
+    if (!culculate) {
+        ast.hashTable[curStep].culculate = [] as string[][];
+    }
+    culculate = ast.hashTable[curStep].culculate;
+    if (culculate) {
+        culculate.push([
+            args.split(",")[0].trim(),
+            args.split(",")[1].trim(),
+            args.split(",")[2].trim(),
+        ]);
+    }
 }
 
 /**
@@ -340,7 +347,7 @@ function processExit() {
  */
 export function validate(astToValidate: AST = ast): void {
     // 如果脚本树为空，则抛出异常
-    if (Object.keys(astToValidate.HashTable).length == 0) {
+    if (Object.keys(astToValidate.hashTable).length == 0) {
         throw new Error("Expected at least one step");
     }
 
@@ -349,13 +356,16 @@ export function validate(astToValidate: AST = ast): void {
         throw new Error("Expected at least one exit step");
     }
     // 遍历脚本树中的每一个 step
-    for (const stepId of Object.keys(astToValidate.HashTable)) {
-        const step = astToValidate.HashTable[stepId];
+    for (const stepId of Object.keys(astToValidate.hashTable)) {
+        const step = astToValidate.hashTable[stepId];
 
-        // 如果 step 中的 default 列表为空，而且不是 exit step，则抛出异常
+        // 如果 step 中的 default 列表为空，而且不是 exit step，也没有计算跳转，则抛出异常
         const defaultList = step.default;
         if (!defaultList) {
-            if (!astToValidate.exitStep.includes(stepId)) {
+            if (
+                !astToValidate.exitStep.includes(stepId) &&
+                !astToValidate.hashTable[stepId].culculate
+            ) {
                 const line = step.line;
                 if (line) {
                     throw new Error(
@@ -368,7 +378,7 @@ export function validate(astToValidate: AST = ast): void {
         } else {
             // 如果 default 列表中的 step 不存在，则抛出异常
             if (
-                !Object.keys(astToValidate.HashTable).includes(defaultList.args)
+                !Object.keys(astToValidate.hashTable).includes(defaultList.args)
             ) {
                 throw new Error(
                     "Default step " +
@@ -383,7 +393,7 @@ export function validate(astToValidate: AST = ast): void {
         const silenceList = step.silence;
         if (silenceList) {
             if (
-                !Object.keys(astToValidate.HashTable).includes(silenceList.args)
+                !Object.keys(astToValidate.hashTable).includes(silenceList.args)
             ) {
                 throw new Error(
                     "Silence step " +
@@ -410,7 +420,7 @@ export function validate(astToValidate: AST = ast): void {
         if (branchList) {
             for (const branch of branchList) {
                 if (
-                    !Object.keys(astToValidate.HashTable).includes(
+                    !Object.keys(astToValidate.hashTable).includes(
                         branch.nextStepId
                     )
                 ) {

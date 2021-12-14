@@ -370,7 +370,7 @@ export default defineComponent({
                     text: "#565867",
                 },
             },
-            alwaysScrollToBottom: false, // 是否始终滚动到底部
+            alwaysScrollToBottom: true, // 是否始终滚动到底部
             messageStyling: true, // 是否使用自定义消息样式
             sendMessage, // 发送消息的函数
             onMessageWasSent, // 消息发送的处理函数

@@ -68,7 +68,7 @@ export interface HASHTABLE {
         /** branch 类型 */
         branch?: BRANCH[];
         /** culculate 类型 */
-        culculate?: [string, string, string];
+        culculate?: string[][];
     };
 }
 
@@ -85,7 +85,7 @@ export interface VARS {
  */
 export interface AST {
     /** 哈希表 */
-    HashTable: HASHTABLE;
+    hashTable: HASHTABLE;
     /** 入口 Step */
     entry: string;
     /** 出口 Step */

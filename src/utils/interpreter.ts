@@ -38,10 +38,10 @@ export function interpret(
     entry = false,
     silence = false
 ): ANSWER {
-    const culculate = ast.HashTable[env.curStep].culculate;
+    const culculate = ast.hashTable[env.curStep].culculate;
     if (entry) {
         let text = "";
-        const speak = ast.HashTable[env.curStep].speak;
+        const speak = ast.hashTable[env.curStep].speak;
         if (speak) {
             for (const i of speak) {
                 if (i.type === "string") {
@@ -53,7 +53,7 @@ export function interpret(
                 }
             }
         }
-        const listen = ast.HashTable[env.curStep].listen;
+        const listen = ast.hashTable[env.curStep].listen;
         if (listen) {
             return {
                 text: text,
@@ -68,8 +68,8 @@ export function interpret(
             };
         }
     } else if (silence) {
-        const silenceList = ast.HashTable[env.curStep].silence;
-        const defaultList = ast.HashTable[env.curStep].default;
+        const silenceList = ast.hashTable[env.curStep].silence;
+        const defaultList = ast.hashTable[env.curStep].default;
         if (silenceList) {
             env.curStep = silenceList.args;
         } else if (defaultList) {
@@ -79,19 +79,18 @@ export function interpret(
         }
     } else if (culculate) {
         try {
-            let tmpCul = culculate[2].replace(
-                culculate[0],
-                env.vars[culculate[0]]
-            );
-            tmpCul = tmpCul.replace("INPUT", answerFromUser);
-            env.vars[culculate[0]] = eval(tmpCul).toString();
-            env.curStep = culculate[1];
+            for (const i of culculate) {
+                let tmpCul = i[2].replace(i[0], env.vars[i[0]]);
+                tmpCul = tmpCul.replace("INPUT", answerFromUser);
+                env.vars[i[0]] = eval(tmpCul).toString();
+                env.curStep = i[1];
+            }
         } catch (e) {
             throw new Error("Culculate error");
         }
     } else {
         let flag = false;
-        const branch = ast.HashTable[env.curStep].branch;
+        const branch = ast.hashTable[env.curStep].branch;
         if (branch) {
             for (const i of branch) {
                 if (answerFromUser.includes(i.answer)) {
@@ -102,7 +101,7 @@ export function interpret(
             }
         }
         if (!flag) {
-            const defaultList = ast.HashTable[env.curStep].default;
+            const defaultList = ast.hashTable[env.curStep].default;
             if (defaultList) {
                 env.curStep = defaultList.args;
             } else {
@@ -111,7 +110,7 @@ export function interpret(
         }
     }
     let text = "";
-    const speak = ast.HashTable[env.curStep].speak;
+    const speak = ast.hashTable[env.curStep].speak;
     if (speak) {
         for (const i of speak) {
             if (i.type === "string") {
@@ -123,7 +122,7 @@ export function interpret(
             }
         }
     }
-    const listen = ast.HashTable[env.curStep].listen;
+    const listen = ast.hashTable[env.curStep].listen;
     if (listen) {
         return {
             text: text,
