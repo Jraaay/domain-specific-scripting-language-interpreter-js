@@ -420,7 +420,9 @@ export default defineComponent({
                         input[0].setAttribute("placeholder", "聊天已结束");
 
                         // 保存聊天信息
-                        bus.userList[tmp.curUser].messageList = tmp.messageList;
+                        bus.userList[tmp.curUser].messageList = JSON.parse(
+                            JSON.stringify(tmp.messageList)
+                        );
 
                         // 暂时保存环境
                         tmp.messageList = JSON.parse(
