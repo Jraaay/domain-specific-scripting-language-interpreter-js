@@ -289,11 +289,16 @@ export default defineComponent({
                             tmp.curUser = username;
 
                             // 设置该用户的环境
-                            tmp.env = bus.userList[username].env;
+                            tmp.env = JSON.parse(
+                                JSON.stringify(bus.userList[username].env)
+                            );
 
                             // 回复聊天信息列表
-                            tmp.messageList =
-                                bus.userList[username].messageList;
+                            tmp.messageList = JSON.parse(
+                                JSON.stringify(
+                                    bus.userList[username].messageList
+                                )
+                            );
                             tmp.stop = false;
 
                             // 打开聊天框
@@ -315,8 +320,12 @@ export default defineComponent({
         function closeChat() {
             // 如果用户还在列表中，即聊天还没有结束则保存环境和消息列表
             if (Object.keys(bus.userList).includes(tmp.curUser)) {
-                bus.userList[tmp.curUser].env = tmp.env;
-                bus.userList[tmp.curUser].messageList = tmp.messageList;
+                bus.userList[tmp.curUser].env = JSON.parse(
+                    JSON.stringify(tmp.env)
+                );
+                bus.userList[tmp.curUser].messageList = JSON.parse(
+                    JSON.stringify(tmp.messageList)
+                );
             }
 
             // 关闭聊天框
